@@ -12,17 +12,18 @@ class User < ActiveRecord::Base
       u.email = auth["info"]["email"]
       u.avatar_url = auth["info"]["image"]
       u.name = auth["info"]["name"]
-      u.save
+      u.save # use strong params here?
     end
   end
 
   def display_phone_number
+    # long ternary -- can be converted to block
     phone_number && !phone_number.empty? ? phone_number : "<i>add your phone number to receive text message updates</i>".html_safe
   end
 
   def normalize_phone_number
-    if phone_number && phone_number.strip.empty?
-      phone_number = nil 
+    if phone_number && phone_number.strip.empty? # this doesn't seem like a good check for numbers?
+      phone_number = nil
     end
   end
 end

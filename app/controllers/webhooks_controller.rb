@@ -18,11 +18,12 @@ class WebhooksController < ApplicationController
       issue.update(title: issue_params["title"], content: issue_params["body"], assignee: issue_params["assignee"], status: issue_params["state"])
       owner = issue.repository.user
       if owner.phone_number
-        @client = Twilio::REST::Client.new(ENV['TWILIO_SID'], ENV['TWILIO_TOKEN'])
-        @client.messages.create(
-          to: owner.phone_number, 
-          from: "+1 #{ENV['TWILIO_NUMBER']}",
-           body: "#{issue.title} has been updated. View it here: #{issue.url}")
+        Adapter::TwilioWrapper.new(issue).create_issue_text
+        # @client = Twilio::REST::Client.new(ENV['TWILIO_SID'], ENV['TWILIO_TOKEN'])
+        # @client.messages.create(
+        #   to: owner.phone_number,
+        #   from: "+1 #{ENV['TWILIO_NUMBER']}",
+        #    body: "#{issue.title} has been updated. View it here: #{issue.url}")
       end
       UserMailer.issue_update_email(issue.user, issue).deliver_now
       head :no_content

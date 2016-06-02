@@ -14,15 +14,15 @@ class RepositoriesController < ApplicationController
   end
 
   def create
-    @client ||= Octokit::Client.new(access_token: ENV["GITHUB_TOKEN"])
-    repo_owner = params[:repository][:url].split("/")[-2]
-    repo_name = params[:repository][:url].split("/")[-1]
-    @repo = Repository.new(name: repo_name, url: params[:repository][:url], user: current_user)
+    # @client ||= Octokit::Client.new(access_token: ENV["GITHUB_TOKEN"])
+    # repo_owner = params[:repository][:url].split("/")[-2] # same with validator, info extraction in separate method
+    # repo_name = params[:repository][:url].split("/")[-1]
+    @repo = RepoCreator.create_repo(repo_params, current_user)
     if @repo.save
-      gh_repo = @client.repo("#{repo_owner}/#{repo_name}")
-      @client.issues("#{repo_owner}/#{repo_name}").each do |issue|
-        Issue.create(url: issue.html_url, opened_by: issue.user.login, status: issue.state, title: issue.title, content: issue.body, opened_on: issue.created_at, assignee: issue.assignee, repository: @repo)
-      end
+      # gh_repo = @client.repo("#{repo_owner}/#{repo_name}")
+      # @client.issues("#{repo_owner}/#{repo_name}").each do |issue|
+      #   Issue.create(url: issue.html_url, opened_by: issue.user.login, status: issue.state, title: issue.title, content: issue.body, opened_on: issue.created_at, assignee: issue.assignee, repository: @repo)
+      # end
       @client.create_hook("#{repo_owner}/#{repo_name}",
         'web',
         {url: "#{ENV['ISSUE_TRACKR_APP_URL']}/webhooks/receive", content_type: 'json'},
@@ -33,5 +33,10 @@ class RepositoriesController < ApplicationController
       f.html {head :no_content; return}
     end
   end
-end
 
+  private
+
+  def repo_params
+    params.require(:repository).permit(:url)
+  end
+end
